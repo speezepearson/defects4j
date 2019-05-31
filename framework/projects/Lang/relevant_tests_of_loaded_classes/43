@@ -1,0 +1,10 @@
+org.apache.commons.lang.ValidateTest
+org.apache.commons.lang.text.ExtendedMessageFormatTest
+org.apache.commons.lang.text.StrBuilderTest
+org.apache.commons.lang.text.StrMatcherTest
+org.apache.commons.lang.text.StrSubstitutorTest
+org.apache.commons.lang.text.StrTokenizerTest
+org.apache.commons.lang.time.DateFormatUtilsTest
+org.apache.commons.lang.time.DateUtilsRoundingTest
+org.apache.commons.lang.time.DurationFormatUtilsTest
+org.apache.commons.lang.time.FastDateFormatTest

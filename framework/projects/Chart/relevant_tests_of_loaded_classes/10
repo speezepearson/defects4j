@@ -1,0 +1,8 @@
+org.jfree.chart.entity.junit.CategoryItemEntityTests
+org.jfree.chart.entity.junit.LegendItemEntityTests
+org.jfree.chart.entity.junit.PieSectionEntityTests
+org.jfree.chart.entity.junit.StandardEntityCollectionTests
+org.jfree.chart.entity.junit.TickLabelEntityTests
+org.jfree.chart.entity.junit.XYItemEntityTests
+org.jfree.chart.imagemap.junit.StandardToolTipTagFragmentGeneratorTests
+org.jfree.chart.imagemap.junit.StandardURLTagFragmentGeneratorTests

@@ -1,0 +1,6 @@
+org.apache.commons.lang3.StringEscapeUtilsTest
+org.apache.commons.lang3.text.translate.LookupTranslatorTest
+org.apache.commons.lang3.text.translate.NumericEntityEscaperTest
+org.apache.commons.lang3.text.translate.NumericEntityUnescaperTest
+org.apache.commons.lang3.text.translate.UnicodeEscaperTest
+org.apache.commons.lang3.text.translate.UnicodeUnescaperTest

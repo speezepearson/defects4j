@@ -1,0 +1,4 @@
+org.apache.commons.lang.EntitiesPerformanceTest
+org.apache.commons.lang.EntitiesTest
+org.apache.commons.lang.IntHashMapTest
+org.apache.commons.lang.StringEscapeUtilsTest

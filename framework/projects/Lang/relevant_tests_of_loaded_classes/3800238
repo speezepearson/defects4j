@@ -1,0 +1,7 @@
+org.apache.commons.lang3.ValidateTest
+org.apache.commons.lang3.reflect.TypeUtilsTest
+org.apache.commons.lang3.text.ExtendedMessageFormatTest
+org.apache.commons.lang3.time.DateFormatUtilsTest
+org.apache.commons.lang3.time.DateUtilsRoundingTest
+org.apache.commons.lang3.time.DurationFormatUtilsTest
+org.apache.commons.lang3.time.FastDateFormatTest
