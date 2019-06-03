@@ -1,2 +1,3 @@
 --- org.joda.time.TestDateTimeComparator::testMillis
 --- org.joda.time.format.TestPeriodFormatParsing::testParseStandard1
+--- org.joda.time.TestPeriodType::testForFields4
