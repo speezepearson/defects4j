@@ -120,6 +120,7 @@
             <exec executable="${basedir}/gradlew" failonerror="true">
                 <arg value="-xtestClasses"/>
                 <arg value="-xtest"/>
+                <arg value="-xjar"/>
                 <arg value="classes"/>
             </exec>
             <exec executable="${basedir}/gradlew" failonerror="true">
