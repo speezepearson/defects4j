@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 #
 #-------------------------------------------------------------------------------
-# Copyright (c) 2014-2015 René Just, Darioush Jalali, and Defects4J contributors.
+# Copyright (c) 2014-2019 René Just, Darioush Jalali, and Defects4J contributors.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,7 @@ run_mutation.pl -- mutation analysis for generated test suites.
 
 =head1 SYNOPSIS
 
-  run_mutation.pl -p project_id -d suite_dir -o out_dir [-f include_file_pattern] [-v version_id] [-t tmp_dir] [-D] [-A]
+  run_mutation.pl -p project_id -d suite_dir -o out_dir [-f include_file_pattern] [-v version_id] [-t tmp_dir] [-e exclude_file] [-D] [-A | -i mutate_classes]
 
 =head1 OPTIONS
 
@@ -64,6 +64,17 @@ test suites for the given project id are analyzed.
 
 The temporary root directory to be used to check out program versions (optional).
 The default is F</tmp>.
+
+=item -e F<exclude_file>
+
+The file that contains the list of all mutants ids (one per row) to exclude (optional).
+Per default no exclude file is used and therefore no mutant is excluded.
+
+=item -i F<mutate_classes>
+
+Measure mutation score for all classes listed in F<mutate_classes> (optional). By
+default, mutation score is measured only for the classes modified by the bug fix. The file
+F<mutate_classes> must contain fully-qualified class names -- one class per line.
 
 =item -D
 
@@ -111,7 +122,7 @@ use DB;
 # Process arguments and issue usage message if necessary.
 #
 my %cmd_opts;
-getopts('p:d:v:t:o:f:DA', \%cmd_opts) or pod2usage(1);
+getopts('p:d:v:t:o:f:e:i:DA', \%cmd_opts) or pod2usage(1);
 
 pod2usage(1) unless defined $cmd_opts{p} and defined $cmd_opts{d} and defined $cmd_opts{o};
 
@@ -122,8 +133,20 @@ my $PID = $cmd_opts{p};
 my $SUITE_DIR = abs_path($cmd_opts{d});
 my $VID = $cmd_opts{v} if defined $cmd_opts{v};
 my $INCL = $cmd_opts{f} // "*.java";
+my $EXCL = $cmd_opts{e};
 # Enable debugging if flag is set
 $DEBUG = 1 if defined $cmd_opts{D};
+
+# The mutation operators that should be enabled
+my @MUT_OPS = ("AOR", "LOR","SOR", "COR", "ROR", "ORU", "LVR", "STD");
+
+# Directory of class lists used for mutation step
+my $CLASSES = defined $cmd_opts{A} ? "loaded_classes" : "modified_classes";
+my $TARGET_CLASSES_DIR = "$SCRIPT_DIR/projects/$PID/$CLASSES";
+my $MUTATE_CLASSES = $cmd_opts{i} if defined $cmd_opts{i};
+if (defined $cmd_opts{A} && defined $cmd_opts{i}) {
+    pod2usage( { -verbose => 1, -input => __FILE__} );
+}
 
 # Set up project
 my $project = Project::create_project($PID);
@@ -192,10 +215,6 @@ Examples:
 
 # Get all test suite archives that match the given project id and version id
 my $test_suites = Utils::get_all_test_suites($SUITE_DIR, $PID, $VID);
-
-# Directory of class lists used for mutation step
-my $CLASSES = defined $cmd_opts{A} ? "loaded_classes" : "modified_classes";
-my $TARGET_CLASSES_DIR = "$SCRIPT_DIR/projects/$PID/$CLASSES";
 
 # Get database handle for result table
 my $dbh_out = DB::get_db_handle($TAB_MUTATION, $OUT_DIR);
@@ -266,15 +285,25 @@ sub _run_mutation {
     $project->{prog_root} = "$root";
     $project->checkout_vid($vid) or die "Checkout failed";
 
-    # Create mutation definitions (mml file)
-    my $mml_dir = "$TMP_DIR/.mml";
-    system("$UTIL_DIR/create_mml.pl -p $PID -c $TARGET_CLASSES_DIR/$bid.src -o $mml_dir -b $bid");
-    my $mml_file = "$mml_dir/$bid.mml.bin";
-    -e $mml_file or die "Mml file does not exist: $mml_file!";
+    my $num_excluded_mutants = 0;
+    if (defined $EXCL) {
+      # Count number of excluded mutants: number of lines, excluding:
+      #   - empty lines, i.e., lines with only spaces or tabs, or truly empty lines
+      #   - lines with comments, i.e., lines that start with '#'
+      open(EXCL_FILE, "<$EXCL") or die "Cannot read exclude file";
+      while (<EXCL_FILE>) {
+        next if /^[[:space:]]*(#.*)?$/;
+        $num_excluded_mutants += 1;
+      }
+      close(EXCL_FILE);
+    }
 
-    # Mutate source code
-    $ENV{MML} = $mml_file;
-    my $gen_mutants = $project->mutate();
+    my $gen_mutants = 0;
+    if (defined $MUTATE_CLASSES) {
+        $gen_mutants = $project->mutate("$MUTATE_CLASSES", \@MUT_OPS);
+    } else {
+        $gen_mutants = $project->mutate("$TARGET_CLASSES_DIR/$bid.src", \@MUT_OPS);
+    }
     $gen_mutants > 0 or die "No mutants generated for $vid!";
 
     # Compile generated tests
@@ -283,10 +312,10 @@ sub _run_mutation {
     # No need to run the test suite first. Major's preprocessing verifies that
     # all tests in the test suite pass before performing the mutation analysis.
     my $mut_log = "$TMP_DIR/.mutation.log"; `>$mut_log`;
-    my $mut_map = Mutation::mutation_analysis_ext($project, $test_dir, "$INCL", $mut_log);
+    my $mut_map = Mutation::mutation_analysis_ext($project, $test_dir, "$INCL", $mut_log, $EXCL);
     if (defined $mut_map) {
         # Add results to database table
-        Mutation::insert_row($OUT_DIR, $PID, $vid, $suite_src, $test_id, $gen_mutants, $mut_map);
+        Mutation::insert_row($OUT_DIR, $PID, $vid, $suite_src, $test_id, $gen_mutants, $num_excluded_mutants, $mut_map);
     } else {
         # Add incomplete results to database table to indicate a broken test suite
         Mutation::insert_row($OUT_DIR, $PID, $vid, $suite_src, $test_id, "-");

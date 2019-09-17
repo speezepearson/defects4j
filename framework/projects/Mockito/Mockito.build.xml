@@ -30,6 +30,7 @@
     <condition property="test.src.home" value="${basedir}/src/test" else="${basedir}/test">
         <istrue value="${use.ant}"/>
     </condition>
+    <property name="test.classes.dir" value="${test.home}" />
 
     <condition property="build.home" value="${basedir}/target" else="${basedir}/build">
         <istrue value="${use.ant}"/>
@@ -38,6 +39,9 @@
     <path id="compile.classpath">
         <pathelement path="${classes.dir}"/>
         <fileset dir="${d4j.home}/framework/projects/${d4j.project.id}/lib/">
+            <include name="**/*.jar" />
+        </fileset>
+        <fileset dir="${basedir}/compileLib/">
             <include name="**/*.jar" />
         </fileset>
     </path>
@@ -73,21 +77,31 @@
     <!-- Compile the sources using Gradle, used in newer commits -->
     <target name="gradle.compile" if="use.gradle" unless="d4j.mutation">
         <!-- Delete a test that is causing trouble -->
-        <delete file="${basedir}/buildSrc/src/test/groovy/org/mockito/release/notes/improvements/GitHubTicketFetcherTest.groovy" />
+        <delete file="${basedir}/buildSrc/src/test/groovy/org/mockito/release/notes/improvements/GitHubTicketFetcherTest.groovy" quiet="true" />
 
         <!-- Call the Gradle build script -->
-        <exec executable="/bin/bash" failonerror="true">
-            <arg value="gradlew"/>
+        <exec executable="${basedir}/gradlew" failonerror="true">
+            <arg value="-xtestClasses"/>
+            <arg value="-xtest"/>
             <arg value="classes"/>
+        </exec>
+        <exec executable="${basedir}/gradlew" failonerror="true">
+            <arg value="--stop"/>
         </exec>
     </target>
 
     <!-- Compile the tests using Gradle, used in newer commits -->
     <target name="gradle.compile.tests" if="use.gradle">
+        <!-- Delete a test that is causing trouble -->
+        <delete file="${basedir}/buildSrc/src/test/groovy/org/mockito/release/notes/improvements/GitHubTicketFetcherTest.groovy" quiet="true" />
+
         <!-- Call the Gradle build script -->
-        <exec executable="/bin/bash" failonerror="true">
-            <arg value="gradlew"/>
+        <exec executable="${basedir}/gradlew" failonerror="true">
+            <arg value="-xtest"/>
             <arg value="testClasses"/>
+        </exec>
+        <exec executable="${basedir}/gradlew" failonerror="true">
+            <arg value="--stop"/>
         </exec>
     </target>
 
@@ -103,12 +117,13 @@
                 <arg value="${d4j.home}"/>
             </exec>
              <!-- Call the Gradle build script -->
-            <exec executable="/bin/bash" failonerror="true">
-                <arg value="gradlew"/>
-                <arg value="classes"/>
+            <exec executable="${basedir}/gradlew" failonerror="true">
                 <arg value="-xtestClasses"/>
                 <arg value="-xtest"/>
-                <arg value="-xjar"/>
+                <arg value="classes"/>
+            </exec>
+            <exec executable="${basedir}/gradlew" failonerror="true">
+                <arg value="--stop"/>
             </exec>
         </try>
         <finally>
@@ -132,8 +147,10 @@
         <antcall target="gradle.compile.mutants"/>
         <antcall target="ant.compile.mutants"/>
 
-        <!-- Copy the correct version of libraries for testing -->
+        <!-- Make sure the compileLib directory exists as file sets elsewhere in
+             this build file depend on it -->
         <mkdir dir="${basedir}/compileLib"/>
+        <!-- Copy the correct version of libraries for compilation and testing -->
         <exec executable="/bin/bash" failonerror="true">
             <arg value="${d4j.home}/framework/projects/${d4j.project.id}/chooseDepedencyVersion.sh"/>
             <arg value="${basedir}"/>

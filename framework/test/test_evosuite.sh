@@ -10,7 +10,7 @@ init
 
 # Directory for EvoSuite test suites
 evo_dir=$TMP_DIR/evosuite
-# Generate tests for Lang-2 (modified classes) and Lang-3 (all relevant classes)
+# Generate tests for Lang-2 (modified classes) and Lang-62 (all relevant classes)
 pid=Lang
 bid_mod=2
 bid_all=62
@@ -56,6 +56,6 @@ test_bug_detection $pid $suite_dir
 test_mutation $pid $suite_dir
 
 # Run test suites and determine code coverage
-test_coverage $pid $suite_dir
+test_coverage $pid $suite_dir 0
 
 rm -rf $evo_dir

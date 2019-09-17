@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2014-2015 René Just, Darioush Jalali, and Defects4J contributors.
+Copyright (c) 2014-2017 René Just, Darioush Jalali, and Defects4J contributors.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -39,6 +39,9 @@ project-specific build file ("project_id"/"project_id".build.xml) for the
     <!-- Check whether d4j.home is set -->
     <fail message="Property d4j.home not set!" unless="d4j.home" />
 
+    <!-- The default location for the projects meta data -->
+    <property name="d4j.dir.projects" value="${d4j.home}/framework/projects" />
+
     <taskdef resource="net/sf/antcontrib/antlib.xml"
             classpath="${d4j.home}/framework/lib/ant-contrib.jar"/>
 
@@ -74,7 +77,7 @@ project-specific build file ("project_id"/"project_id".build.xml) for the
     <import file="${d4j.home}/framework/projects/defects4j.export.xml"/>
 
     <!-- Include project-specific build file -->
-    <import file="${d4j.home}/framework/projects/${d4j.project.id}/${d4j.project.id}.build.xml"/>
+    <import file="${d4j.dir.projects}/${d4j.project.id}/${d4j.project.id}.build.xml"/>
 
 
 <!--
@@ -128,7 +131,7 @@ project-specific build file ("project_id"/"project_id".build.xml) for the
     Test has to be provided as property "test.entry" (class::method)
     and the output is redirected to "test.output"
 -->
-    <target name="monitor.test" description="Run a single test class or method and monitor class loader">
+    <target name="monitor.test" depends="compile.tests" description="Run a single test class or method and monitor class loader">
         <fail message="Property test.entry not set!" unless="test.entry" />
         <fail message="Property test.output not set!" unless="test.output" />
 
@@ -198,8 +201,12 @@ project-specific build file ("project_id"/"project_id".build.xml) for the
             </else>
         </if>
 
-        <fail message="Property major.exclude not set!" unless="major.exclude" />
         <fail message="Property major.kill.log not set!" unless="major.kill.log" />
+
+        <!-- Sort test classes by run time, unless a single test method is run -->
+        <condition property="major.sort" value="original" else="sort_classes">
+            <isset property="test.entry.method"/>
+        </condition>
 
         <echo message="Running mutation analysis ..."/>
         <junit
@@ -209,7 +216,7 @@ project-specific build file ("project_id"/"project_id".build.xml) for the
 
             mutationAnalysis="true"
             timeoutFactor="16"
-            sort="sort_classes"
+            sort="${major.sort}"
             haltonfailure="true"
             killDetailsFile="${major.kill.log}"
             excludeFile="${major.exclude}"
@@ -247,6 +254,7 @@ project-specific build file ("project_id"/"project_id".build.xml) for the
         <echo message="classes.dir: ${classes.dir}" />
         <echo message="build.home: ${build.home}" />
 
+        <delete dir="${build.home}/gen-tests" quiet="true" />
         <mkdir dir="${build.home}/gen-tests" />
         <javac srcdir="${d4j.test.dir}"
                destdir="${build.home}/gen-tests"
@@ -347,7 +355,7 @@ project-specific build file ("project_id"/"project_id".build.xml) for the
         <!-- TODO: Conversions in Ant a rather cumbersome and hacky. Also, the
                    build file should not rely on the current directory structure
               => D4J should provide properly filtered files in the working directory-->
-        <loadfile srcfile="${d4j.home}/framework/projects/${d4j.project.id}/relevant_tests/${d4j.bug.id}"
+        <loadfile srcfile="${d4j.dir.projects}/${d4j.project.id}/relevant_tests/${d4j.bug.id}"
                  property="rel.files">
             <filterchain>
                 <tokenfilter>

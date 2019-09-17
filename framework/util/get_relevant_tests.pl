@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 #
 #-------------------------------------------------------------------------------
-# Copyright (c) 2014-2016 René Just, Darioush Jalali, and Defects4J contributors.
+# Copyright (c) 2014-2019 René Just, Darioush Jalali, and Defects4J contributors.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,8 +26,9 @@
 
 =head1 NAME
 
-get_relevant_tests.pl -- Checks out each revision of the given project and determines the
-set of relevant tests. Dies if any case fails.
+get_relevant_tests.pl -- Determines for each version of a given project the set
+of relevant tests. The script fails on the first occurrence of an error on any
+project version.
 
 =head1 SYNOPSIS
 
@@ -53,7 +54,7 @@ The default is F</tmp>.
 =item B<-o F<out_dir>>
 
 The output directory to be used (optional).
-The default is F<relevant_tests> in the projects directory.
+The default is F<relevant_tests> in Defects4J's project directory.
 
 =back
 
@@ -88,8 +89,8 @@ my $TMP_DIR = Utils::get_tmp_dir($cmd_opts{t});
 system("mkdir -p $TMP_DIR");
 my $project = Project::create_project($PID);
 $project->{prog_root} = $TMP_DIR;
-my $project_dir = "$SCRIPT_DIR/projects/$PID";
-my $out_dir = $cmd_opts{o} // "$SCRIPT_DIR/projects/$PID/relevant_tests";
+my $project_dir = "$PROJECTS_DIR/$PID";
+my $out_dir = $cmd_opts{o} // "$project_dir/relevant_tests";
 
 my @ids;
 if (defined $BID) {

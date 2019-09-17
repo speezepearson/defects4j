@@ -1,5 +1,5 @@
 #-------------------------------------------------------------------------------
-# Copyright (c) 2014-2015 René Just, Darioush Jalali, and Defects4J contributors.
+# Copyright (c) 2014-2019 René Just, Darioush Jalali, and Defects4J contributors.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -80,6 +80,13 @@ The directory that contains all scripts and modules (I<parent of this module's d
 =cut
 our $SCRIPT_DIR = ($ENV{'SCRIPT_DIR'} // abs_path("$dir/../"));
 
+=item C<PROJECTS_DIR>
+
+The directory that contains all project metadata (I<C<SCRIPT_DIR>/projects>)
+
+=cut
+our $PROJECTS_DIR = ($ENV{'PROJECTS_DIR'} // abs_path("$SCRIPT_DIR/projects"));
+
 =pod
 
 =item C<CORE_DIR>
@@ -154,14 +161,32 @@ our $TESTGEN_LIB_DIR = ($ENV{'TESTGEN_LIB_DIR'} // "$LIB_DIR/test_generation/gen
 
 =pod
 
+=item C<BUILD_SYSTEMS_LIB_DIR>
+
+The directory of the libraries of the build system tools (I<C<LIB_DIR>/build_systems>)
+
+=cut
+our $BUILD_SYSTEMS_LIB_DIR = ($ENV{'BUILD_SYSTEMS_LIB_DIR'} // "$LIB_DIR/build_systems");
+
+=pod
+
 =item C<D4J_BUILD_FILE>
 
 The top-level (ant) build file (I<C<SCRIPT_DIR>/projects/defects4j.build.xml>)
 
+=cut
+our $D4J_BUILD_FILE = ($ENV{'D4J_BUILD_FILE'} or "$SCRIPT_DIR/projects/defects4j.build.xml");
+
+=pod
+
+=item C<GRADLE_LOCAL_HOME_DIR>
+
+The directory name of the local gradle repository (.gradle_local_home).
+
 =back
 
 =cut
-our $D4J_BUILD_FILE = ($ENV{'D4J_BUILD_FILE'} or "$SCRIPT_DIR/projects/defects4j.build.xml");
+our $GRADLE_LOCAL_HOME_DIR = ".gradle_local_home";
 
 #
 # Check whether Defects4J has been properly initialized:
@@ -170,11 +195,17 @@ our $D4J_BUILD_FILE = ($ENV{'D4J_BUILD_FILE'} or "$SCRIPT_DIR/projects/defects4j
 # - External libraries (test generation) available?
 #
 -e "$REPO_DIR/README"
-        or die("Couldn't find project repositories! Did you run 'defects4j/init.sh'?\n\n");
+        or die("Couldn't find project repositories! Did you (re)run 'defects4j/init.sh'?\n\n");
 -e "$MAJOR_ROOT/bin/ant"
-        or die("Couldn't find Major mutation framework! Did you run 'defects4j/init.sh'?\n\n");
+        or die("Couldn't find Major mutation framework! Did you (re)run 'defects4j/init.sh'?\n\n");
 -d "$TESTGEN_LIB_DIR"
-        or die("Couldn't find external libraries! Did you run 'defects4j/init.sh'?\n\n");
+        or die("Couldn't find test generation tools! Did you (re)run 'defects4j/init.sh'?\n\n");
+-d "$BUILD_SYSTEMS_LIB_DIR"
+        or die("Couldn't find build system tools! Did you (re)run 'defects4j/init.sh'?\n\n");
+-d "$BUILD_SYSTEMS_LIB_DIR/gradle/dists"
+        or die("Couldn't find gradle distributions! Did you (re)run 'defects4j/init.sh'?\n\n");
+-d "$BUILD_SYSTEMS_LIB_DIR/gradle/deps"
+        or die("Couldn't find gradle dependencies! Did you (re)run 'defects4j/init.sh'?\n\n");
 
 # Add script and core directory to @INC
 unshift(@INC, $CORE_DIR);
@@ -196,8 +227,10 @@ our $CONFIG_VID = "vid";
 
 # Filename which stores build properties
 our $PROP_FILE       = "defects4j.build.properties";
-our $PROP_EXCLUDE    = "d4j.tests.exclude";
-our $PROP_INSTRUMENT = "d4j.classes.instrument";
+# Keys of stored properties
+our $PROP_EXCLUDE         = "d4j.tests.exclude";
+our $PROP_INSTRUMENT      = "d4j.classes.instrument";
+our $PROP_MUTATE          = "d4j.classes.mutate";
 our $PROP_DIR_SRC_CLASSES = "d4j.dir.src.classes";
 our $PROP_DIR_SRC_TESTS   = "d4j.dir.src.tests";
 our $PROP_CLASSES_MODIFIED= "d4j.classes.modified";
@@ -213,16 +246,20 @@ our $TAG_PRE_FIX          = "PRE_FIX_REVISION";
 
 our @EXPORT = qw(
 $SCRIPT_DIR
+$PROJECTS_DIR
 $CORE_DIR
 $LIB_DIR
 $UTIL_DIR
 $BASE_DIR
 $MAJOR_ROOT
 $TESTGEN_LIB_DIR
+$BUILD_SYSTEMS_LIB_DIR
 $REPO_DIR
 $D4J_TMP_DIR
 
 $D4J_BUILD_FILE
+
+$GRADLE_LOCAL_HOME_DIR
 
 $ARG_ERROR
 $ABSTRACT_METHOD
@@ -234,6 +271,7 @@ $CONFIG_VID
 $PROP_FILE
 $PROP_EXCLUDE
 $PROP_INSTRUMENT
+$PROP_MUTATE
 $PROP_DIR_SRC_CLASSES
 $PROP_DIR_SRC_TESTS
 $PROP_CLASSES_MODIFIED
