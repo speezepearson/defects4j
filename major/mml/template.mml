@@ -39,8 +39,9 @@ BIN(||)->{!=,LHS,RHS,TRUE};
 
 // Deletions for the STD operator (type of statement that should be deleted)
 DEL(CALL);
-DEL(INC);
-DEL(DEC);
+//DEL(INC);
+//DEL(DEC);
+DEL(INC/DEC);
 DEL(ASSIGN);
 // Don't delete return, continue, and break statements by default
 //DEL(RETURN);
