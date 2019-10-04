@@ -108,7 +108,7 @@
     <!-- Mutate classes if mutation is enabled -->
     <target name="gradle.compile.mutants" if="d4j.mutation" unless="use.ant">
         <!-- Backup build file and set mutation compiler -->
-        <copy file="${basedir}/build.gradle" tofile="${basedir}/build.gradle.bak"/>
+        <copy file="${basedir}/build.gradle" tofile="${basedir}/build.gradle.bak" overwrite="true"/>
 
         <trycatch>
         <try>
